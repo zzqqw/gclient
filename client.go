@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"golang.org/x/net/proxy"
 	"io"
 	"net"
 	"net/http"
@@ -17,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/net/proxy"
 )
 
 const Name = "GClient"
@@ -247,8 +248,8 @@ func DefaultHttpClientWithTimeOut(localAddr net.Addr) *http.Client {
 
 type Client struct {
 	*http.Client
-	Debug bool
-
+	Debug         bool
+	writer        io.Writer
 	BaseURL       string
 	Query         url.Values
 	Header        http.Header
@@ -259,8 +260,6 @@ type Client struct {
 	XMLMarshal    func(v any) ([]byte, error)
 	XMLUnmarshal  func(data []byte, v any) error
 
-	writer io.Writer
-
 	middlewares            []MiddlewareFunc
 	beforeRequestCallbacks []ClientCallback
 	afterRequestCallbacks  []RequestCallback
@@ -268,14 +267,12 @@ type Client struct {
 	successHooks           []SuccessHook
 	errorHooks             []ErrorHook
 	panicHooks             []ErrorHook
-
-	retryCount    int
-	retryWaitTime time.Duration
-	attempt       int
-
-	clone int
-	lock  sync.RWMutex
-	ctx   context.Context
+	retryCount             int
+	retryWaitTime          time.Duration
+	attempt                int
+	clone                  int
+	lock                   sync.RWMutex
+	ctx                    context.Context
 }
 
 func (c *Client) Clone() ClientInterface {

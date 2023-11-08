@@ -2,7 +2,6 @@ package gclient
 
 import (
 	"fmt"
-	"github.com/gookit/color"
 	"log"
 	"os"
 )
@@ -29,7 +28,7 @@ type logger struct {
 	l *log.Logger
 }
 
-func NewLogger() LoggerInterface {
+func NewLogger() *logger {
 	l := &logger{l: log.New(os.Stdout, "", log.Lmsgprefix|log.Lshortfile|log.Ldate|log.Lmicroseconds)}
 	return l
 }
@@ -51,17 +50,5 @@ func (e *logger) Infof(format string, v ...any) {
 
 func (e *logger) Output(level string, format string, v ...any) {
 	e.l.SetPrefix(fmt.Sprintf("%s [%s] >> ", LoggerPrefixName, level))
-	var s string
-	switch level {
-	case LevelError:
-		s = color.Red.Text(fmt.Sprintf(format, v...))
-	case LevelDebug:
-		s = color.Cyan.Text(fmt.Sprintf(format, v...))
-	case LevelWarn:
-		s = color.Yellow.Text(fmt.Sprintf(format, v...))
-	default:
-		s = fmt.Sprintf(format, v...)
-	}
-	_ = e.l.Output(3, s)
-	return
+	_ = e.l.Output(3, fmt.Sprintf(format, v...))
 }

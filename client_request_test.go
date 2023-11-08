@@ -3,10 +3,11 @@ package gclient
 import (
 	"context"
 	"encoding/json"
-	_testdata "github.com/zzqqw/gclient/.testdata"
 	"net/http"
 	"net/url"
 	"testing"
+
+	_testdata "github.com/zzqqw/gclient/.testdata"
 )
 
 var defaultClient = New()
