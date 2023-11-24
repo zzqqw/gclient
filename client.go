@@ -206,6 +206,11 @@ func New() *Client {
 	c.Clone()
 	return c
 }
+func NewInterface() ClientInterface {
+	c := new(Client)
+	c.Clone()
+	return c
+}
 
 func DefaultHttpClient() *http.Client {
 	dialer := &net.Dialer{}
@@ -248,8 +253,10 @@ func DefaultHttpClientWithTimeOut(localAddr net.Addr) *http.Client {
 
 type Client struct {
 	*http.Client
-	Debug         bool
-	writer        io.Writer
+
+	Debug  bool
+	writer io.Writer
+
 	BaseURL       string
 	Query         url.Values
 	Header        http.Header
@@ -267,12 +274,14 @@ type Client struct {
 	successHooks           []SuccessHook
 	errorHooks             []ErrorHook
 	panicHooks             []ErrorHook
-	retryCount             int
-	retryWaitTime          time.Duration
-	attempt                int
-	clone                  int
-	lock                   sync.RWMutex
-	ctx                    context.Context
+
+	retryCount    int
+	retryWaitTime time.Duration
+	attempt       int
+
+	clone int
+	lock  sync.RWMutex
+	ctx   context.Context
 }
 
 func (c *Client) Clone() ClientInterface {
@@ -313,9 +322,13 @@ func (c *Client) Clone() ClientInterface {
 	//os.Stderr
 	c.writer = nil
 
-	c.OnAfterRequest(onAfterRequestDebug)
-	c.OnResponse(onResponseDebug)
-	c.OnResponse(onResponseWriterRequestLog)
+	//------------debug-------------------------
+	//set debug = true
+	c.OnAfterRequest(OnAfterRequestDebug)
+	c.OnResponse(OnResponseDebug)
+	// set writer = os.Stderr
+	c.OnResponse(OnResponseWriterRequestLog)
+	//-------------------------------------------
 
 	if c.Header.Get(HttpHeaderUserAgent) == "" {
 		c.WithUserAgent(defaultClientAgent)

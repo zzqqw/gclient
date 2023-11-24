@@ -13,10 +13,11 @@ const (
 	ctxDebugStartTime CtxKeyString = "_request_debug_logger_start_time"
 )
 
-func onAfterRequestDebug(client *Client, request *http.Request) error {
+func OnAfterRequestDebug(client *Client, request *http.Request) error {
 	if client.Debug {
 		now := time.Now()
 		var body []byte
+		var fileUploadLine string
 		if request.Body != nil {
 			body, _ = io.ReadAll(request.Body)
 			request.Body = NewReadCloser(body, false)
@@ -28,14 +29,19 @@ func onAfterRequestDebug(client *Client, request *http.Request) error {
 			fmt.Sprintf("%s  %s  %s\n", request.Method, request.URL.RequestURI(), request.Proto) +
 			fmt.Sprintf("HOST           : %s\n", request.URL.Host) +
 			fmt.Sprintf("TIME DURATION  : %v\n", now.Format(time.RFC3339Nano)) +
-			fmt.Sprintf("HEADERS        : \n%s\n", string(headers)) +
-			fmt.Sprintf("REQUEST BODY           :\n%v\n", string(body)) +
-			"------------------------------------------------------------------------------\n"
+			fmt.Sprintf("HEADERS        : \n%s\n", string(headers))
+
+		if fileUploadLine == "" {
+			reqLog += fmt.Sprintf("REQUEST BODY           :\n%v\n\n", string(body))
+		} else {
+			reqLog += fmt.Sprintf("\n%s\n\n", fileUploadLine)
+		}
+		reqLog += "------------------------------------------------------------------------------\n"
 		client.Logger.Debugf(reqLog)
 	}
 	return nil
 }
-func onResponseDebug(client *Client, request *http.Request, response *Response) error {
+func OnResponseDebug(client *Client, request *http.Request, response *Response) error {
 	if client.Debug {
 		e := time.Now()
 		var responseBody []byte
@@ -61,11 +67,13 @@ func onResponseDebug(client *Client, request *http.Request, response *Response) 
 	return nil
 }
 
-func onResponseWriterRequestLog(client *Client, request *http.Request, response *Response) error {
+func OnResponseWriterRequestLog(client *Client, request *http.Request, response *Response) error {
 	if client.writer != nil {
 		var builder strings.Builder
 		builder.WriteString("REQUEST: \n")
 		builder.WriteString(fmt.Sprintf("%s %s %s \n", request.Method, request.URL.String(), request.Proto))
+		builder.WriteString(fmt.Sprintf("CLONE: %d \n", client.clone))
+		builder.WriteString(fmt.Sprintf("ATTEMPT: %d \n", client.attempt))
 		reqHeader := request.Header
 		for s := range reqHeader {
 			builder.WriteString(fmt.Sprintf("%s : %s \n", s, reqHeader.Get(s)))
