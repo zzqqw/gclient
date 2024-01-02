@@ -2,7 +2,7 @@ package gclient
 
 import "net/http"
 
-func (c *Client) OnBeforeRequest(callback ClientCallback) ClientInterface {
+func (c *Client) OnBeforeRequest(callback ClientCallback) *Client {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	c.beforeRequestCallbacks = append(c.beforeRequestCallbacks, callback)
@@ -16,7 +16,7 @@ func (c *Client) doBeforeRequestCallbacks() error {
 	}
 	return nil
 }
-func (c *Client) OnAfterRequest(callback RequestCallback) ClientInterface {
+func (c *Client) OnAfterRequest(callback RequestCallback) *Client {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	c.afterRequestCallbacks = append(c.afterRequestCallbacks, callback)
@@ -30,7 +30,7 @@ func (c *Client) doAfterRequestCallbacks(request *http.Request) error {
 	}
 	return nil
 }
-func (c *Client) OnResponse(callback ResponseCallback) ClientInterface {
+func (c *Client) OnResponse(callback ResponseCallback) *Client {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	c.responseCallbacks = append(c.responseCallbacks, callback)
@@ -44,7 +44,7 @@ func (c *Client) doResponseCallbacks(request *http.Request, response *Response) 
 	}
 	return nil
 }
-func (c *Client) OnError(h ErrorHook) ClientInterface {
+func (c *Client) OnError(h ErrorHook) *Client {
 	c.errorHooks = append(c.errorHooks, h)
 	return c
 }
@@ -62,7 +62,7 @@ func (c *Client) doErrorHooks(request *http.Request, response *Response, err err
 		}
 	}
 }
-func (c *Client) OnPanic(h ErrorHook) ClientInterface {
+func (c *Client) OnPanic(h ErrorHook) *Client {
 	c.panicHooks = append(c.panicHooks, h)
 	return c
 }
@@ -73,7 +73,7 @@ func (c *Client) doPanicHooks(request *http.Request, err error) {
 	}
 }
 
-func (c *Client) OnSuccess(h SuccessHook) ClientInterface {
+func (c *Client) OnSuccess(h SuccessHook) *Client {
 	c.successHooks = append(c.successHooks, h)
 	return c
 }

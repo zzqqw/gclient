@@ -59,141 +59,14 @@ var (
 )
 
 type (
+	CtxKeyString     string
 	MiddlewareFunc   = func(c *Client, r *http.Request) (*Response, error)
 	ClientCallback   func(c *Client) error
 	RequestCallback  func(c *Client, req *http.Request) error
 	ResponseCallback func(c *Client, req *http.Request, resp *Response) error
 	ErrorHook        func(c *Client, request *http.Request, err error)
 	SuccessHook      func(c *Client, resp *Response)
-
-	CtxKeyString string
 )
-
-type ClientInterface interface {
-	ClientHttpClientClient
-	ClientOwnerInterface
-}
-
-type ClientHttpClientClient interface {
-	SetHttpClient(client *http.Client) ClientInterface
-	SetTimeout(t time.Duration) ClientInterface
-	SetCheckRedirect(fn func(req *http.Request, via []*http.Request) error)
-	SetTLSConfig(tlsConfig *tls.Config) ClientInterface
-	WithProxyUrl(proxyURL string) ClientInterface
-	WithTLSKeyCrt(crtFile, keyFile string) ClientInterface
-}
-
-type ClientOwnerInterface interface {
-	Clone() ClientInterface
-	SetDebug(debug bool) ClientInterface
-	EnableDebug() ClientInterface
-	SetLogger(logger LoggerInterface) ClientInterface
-	SetWriter(writer io.Writer) ClientInterface
-	SetBaseURL(baseUrl string) ClientInterface
-	SetQuery(query url.Values) ClientInterface
-	SetCookie(cookie Cookie) ClientInterface
-	SetHeader(header http.Header) ClientInterface
-	SetRetry(retryCount int, retryWaitTime time.Duration) ClientInterface
-	ClientFnInterface
-	ClientMiddlewareInterface
-	ClientHeaderInterface
-	ClientRequestInterface
-}
-
-type ClientFnInterface interface {
-	SetJSONMarshaler(marshaler func(v interface{}) ([]byte, error)) ClientInterface
-	SetJSONUnmarshaler(unmarshaler func(data []byte, v interface{}) error) ClientInterface
-	SetXMLMarshaler(marshaler func(v any) ([]byte, error)) ClientInterface
-	SetXMLUnmarshaler(unmarshaler func(data []byte, v any) error) ClientInterface
-	Unmarshal(contentType string, b []byte, d any) (err error)
-
-	OnBeforeRequest(callback ClientCallback) ClientInterface
-	OnAfterRequest(callback RequestCallback) ClientInterface
-	OnResponse(callback ResponseCallback) ClientInterface
-	OnError(h ErrorHook) ClientInterface
-	OnSuccess(h SuccessHook) ClientInterface
-	OnPanic(h ErrorHook) ClientInterface
-}
-
-type ClientHeaderInterface interface {
-	WithClientJar(jar http.CookieJar) ClientInterface
-	WithHeader(header, value string) ClientInterface
-	WithHeaderMap(headers map[string]string) ClientInterface
-	WithContentType(contentType string) ClientInterface
-	WithUserAgent(userAgent string) ClientInterface
-	WithRandomUserAgent() ClientInterface
-	WithRandomMobileUserAgent() ClientInterface
-	AsForm() ClientInterface
-	AsJson() ClientInterface
-	AsXml() ClientInterface
-	WithBasicAuth(username, password string) ClientInterface
-	WithToken(token string, tokenType ...string) ClientInterface
-
-	WithCookieString(cookieString string) ClientInterface
-	WithCookie(k, v string) ClientInterface
-	WithCookieMap(cookies map[string]string) ClientInterface
-	WithCookieNextRequest(cache CacheInterface, ttl time.Duration) ClientInterface
-
-	WithRedirectPolicy(policies ...any) ClientInterface
-	WithRedirectLimit(redirectLimit int) ClientInterface
-}
-
-type ClientMiddlewareInterface interface {
-	Use(middlewares ...MiddlewareFunc) ClientInterface
-}
-
-type ClientRequestInterface interface {
-	ClientDoRequestInterface
-	Get(ctx context.Context, uri string, data any) (*Response, error)
-	GetUnmarshal(ctx context.Context, uri string, data, d any) error
-	GetBytes(ctx context.Context, uri string, data any) ([]byte, error)
-
-	Put(ctx context.Context, uri string, data any) (*Response, error)
-	PutUnmarshal(ctx context.Context, uri string, data, d any) error
-	PutBytes(ctx context.Context, uri string, data any) ([]byte, error)
-
-	Post(ctx context.Context, uri string, data any) (*Response, error)
-	PostUnmarshal(ctx context.Context, uri string, data, d any) error
-	PostBytes(ctx context.Context, uri string, data any) ([]byte, error)
-
-	Delete(ctx context.Context, uri string, data any) (*Response, error)
-	DeleteUnmarshal(ctx context.Context, uri string, data, d any) error
-	DeleteBytes(ctx context.Context, uri string, data any) ([]byte, error)
-
-	Head(ctx context.Context, uri string, data any) (*Response, error)
-	HeadUnmarshal(ctx context.Context, uri string, data, d any) error
-	HeadBytes(ctx context.Context, uri string, data any) ([]byte, error)
-
-	Patch(ctx context.Context, uri string, data any) (*Response, error)
-	PatchUnmarshal(ctx context.Context, uri string, data, d any) error
-	PatchBytes(ctx context.Context, uri string, data any) ([]byte, error)
-
-	Connect(ctx context.Context, uri string, data any) (*Response, error)
-	ConnectUnmarshal(ctx context.Context, uri string, data, d any) error
-	ConnectBytes(ctx context.Context, uri string, data any) ([]byte, error)
-
-	Options(ctx context.Context, uri string, data any) (*Response, error)
-	OptionsUnmarshal(ctx context.Context, uri string, data, d any) error
-	OptionsBytes(ctx context.Context, uri string, data any) ([]byte, error)
-
-	Trace(ctx context.Context, uri string, data any) (*Response, error)
-	TraceUnmarshal(ctx context.Context, uri string, data, d any) error
-	TraceBytes(ctx context.Context, uri string, data any) ([]byte, error)
-
-	PostJson(ctx context.Context, uri string, data any) (*Response, error)
-	PostJsonUnmarshal(ctx context.Context, uri string, data, d any) error
-	PostJsonBytes(ctx context.Context, uri string, data any) ([]byte, error)
-
-	PostForm(ctx context.Context, uri string, data url.Values) (*Response, error)
-	PostFormUnmarshal(ctx context.Context, uri string, data url.Values, d any) error
-	PostFormBytes(ctx context.Context, uri string, data url.Values) ([]byte, error)
-}
-
-type ClientDoRequestInterface interface {
-	DoRequestUnmarshal(ctx context.Context, method string, uri string, data, d any) error
-	DoRequestBytes(ctx context.Context, method string, uri string, data any) ([]byte, error)
-	DoRequest(ctx context.Context, method, uri string, body any) (response *Response, err error)
-}
 
 func NewSetHttpClient(client *http.Client) *Client {
 	c := &Client{Client: client}
@@ -202,11 +75,6 @@ func NewSetHttpClient(client *http.Client) *Client {
 }
 
 func New() *Client {
-	c := new(Client)
-	c.Clone()
-	return c
-}
-func NewInterface() ClientInterface {
 	c := new(Client)
 	c.Clone()
 	return c
@@ -284,7 +152,7 @@ type Client struct {
 	ctx   context.Context
 }
 
-func (c *Client) Clone() ClientInterface {
+func (c *Client) Clone() *Client {
 	c.Debug = false
 	if c.Client == nil {
 		c.Client = DefaultHttpClient()
@@ -338,75 +206,75 @@ func (c *Client) Clone() ClientInterface {
 	return c
 }
 
-func (c *Client) SetHttpClient(client *http.Client) ClientInterface {
+func (c *Client) SetHttpClient(client *http.Client) *Client {
 	c.Client = client
 	return c
 }
-func (c *Client) SetDebug(debug bool) ClientInterface {
+func (c *Client) SetDebug(debug bool) *Client {
 	c.Debug = debug
 	return c
 }
-func (c *Client) EnableDebug() ClientInterface {
+func (c *Client) EnableDebug() *Client {
 	c.SetDebug(true)
 	return c
 }
 
-func (c *Client) SetLogger(logger LoggerInterface) ClientInterface {
+func (c *Client) SetLogger(logger LoggerInterface) *Client {
 	c.Logger = logger
 	return c
 }
 
 // SetWriter os.Stderr
-func (c *Client) SetWriter(writer io.Writer) ClientInterface {
+func (c *Client) SetWriter(writer io.Writer) *Client {
 	c.writer = writer
 	return c
 }
 
-func (c *Client) SetBaseURL(baseUrl string) ClientInterface {
+func (c *Client) SetBaseURL(baseUrl string) *Client {
 	c.BaseURL = baseUrl
 	return c
 }
 
-func (c *Client) SetQuery(query url.Values) ClientInterface {
+func (c *Client) SetQuery(query url.Values) *Client {
 	c.Query = query
 	return c
 }
 
-func (c *Client) SetCookie(cookie Cookie) ClientInterface {
+func (c *Client) SetCookie(cookie Cookie) *Client {
 	c.Cookie = cookie
 	return c
 }
-func (c *Client) SetHeader(header http.Header) ClientInterface {
+func (c *Client) SetHeader(header http.Header) *Client {
 	c.Header = header
 	return c
 }
-func (c *Client) SetJSONMarshaler(marshaler func(v interface{}) ([]byte, error)) ClientInterface {
+func (c *Client) SetJSONMarshaler(marshaler func(v interface{}) ([]byte, error)) *Client {
 	c.JSONMarshal = marshaler
 	return c
 }
-func (c *Client) SetJSONUnmarshaler(unmarshaler func(data []byte, v interface{}) error) ClientInterface {
+func (c *Client) SetJSONUnmarshaler(unmarshaler func(data []byte, v interface{}) error) *Client {
 	c.JSONUnmarshal = unmarshaler
 	return c
 }
-func (c *Client) SetXMLMarshaler(marshaler func(v any) ([]byte, error)) ClientInterface {
+func (c *Client) SetXMLMarshaler(marshaler func(v any) ([]byte, error)) *Client {
 	c.XMLMarshal = marshaler
 	return c
 }
-func (c *Client) SetXMLUnmarshaler(unmarshaler func(data []byte, v any) error) ClientInterface {
+func (c *Client) SetXMLUnmarshaler(unmarshaler func(data []byte, v any) error) *Client {
 	c.XMLUnmarshal = unmarshaler
 	return c
 }
 
-func (c *Client) SetRetry(retryCount int, retryWaitTime time.Duration) ClientInterface {
+func (c *Client) SetRetry(retryCount int, retryWaitTime time.Duration) *Client {
 	c.retryCount = retryCount
 	c.retryWaitTime = retryWaitTime
 	return c
 }
-func (c *Client) SetTimeout(t time.Duration) ClientInterface {
+func (c *Client) SetTimeout(t time.Duration) *Client {
 	c.Client.Timeout = t
 	return c
 }
-func (c *Client) SetTLSConfig(tlsConfig *tls.Config) ClientInterface {
+func (c *Client) SetTLSConfig(tlsConfig *tls.Config) *Client {
 	v, ok := c.Transport.(*http.Transport)
 	if !ok {
 		c.Logger.Errorf(`cannot set TLSClientConfig for custom Transport of the client`)
@@ -427,7 +295,7 @@ func (c *Client) Unmarshal(contentType string, b []byte, d any) (err error) {
 	return
 }
 
-func (c *Client) WithTLSKeyCrt(crtFile, keyFile string) ClientInterface {
+func (c *Client) WithTLSKeyCrt(crtFile, keyFile string) *Client {
 	crt, err := tls.LoadX509KeyPair(crtFile, keyFile)
 	if err != nil {
 		c.Logger.Errorf("LoadKeyCrt failed")
@@ -444,7 +312,7 @@ func (c *Client) WithTLSKeyCrt(crtFile, keyFile string) ClientInterface {
 
 // WithProxyUrl
 // The correct pattern is like `http://USER:PASSWORD@IP:PORT` or `socks5://USER:PASSWORD@IP:PORT`.
-func (c *Client) WithProxyUrl(proxyURL string) ClientInterface {
+func (c *Client) WithProxyUrl(proxyURL string) *Client {
 	if strings.TrimSpace(proxyURL) == "" {
 		return c
 	}

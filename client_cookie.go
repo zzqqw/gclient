@@ -5,28 +5,28 @@ import (
 	"time"
 )
 
-func (c *Client) WithClientJar(jar http.CookieJar) ClientInterface {
+func (c *Client) WithClientJar(jar http.CookieJar) *Client {
 	c.Client.Jar = jar
 	return c
 }
-func (c *Client) WithCookieString(cookieString string) ClientInterface {
+func (c *Client) WithCookieString(cookieString string) *Client {
 	c.SetCookie(NewCookieString(cookieString))
 	return c
 }
 
-func (c *Client) WithCookie(k, v string) ClientInterface {
+func (c *Client) WithCookie(k, v string) *Client {
 	c.Cookie.Set(k, v)
 	return c
 }
 
-func (c *Client) WithCookieMap(cookies map[string]string) ClientInterface {
+func (c *Client) WithCookieMap(cookies map[string]string) *Client {
 	for k, v := range cookies {
 		c.WithCookie(k, v)
 	}
 	return c
 }
 
-func (c *Client) WithCookieNextRequest(cache CacheInterface, ttl time.Duration) ClientInterface {
+func (c *Client) WithCookieNextRequest(cache CacheInterface, ttl time.Duration) *Client {
 	//set cookie
 	c.OnResponse(func(c *Client, req *http.Request, resp *Response) error {
 		cacheKey := Md5String(req.URL.Host)
